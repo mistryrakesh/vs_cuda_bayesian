@@ -57,10 +57,17 @@ __host__ __device__ void bof::Cell::updateDistributions(bof::Cell *prevOccGrid) 
 }
 
 void bof::Cell::toString() {
-    std::cout << "occupied: " << occupiedProbability << std::endl;
+    std::cout << "Pos: (" << xpos << ", " << ypos << "), ";
+    std::cout << "xVel: [" << xVelocityDistribution[0];
+    for (int i = 1; i < NUM_VELOCITY; ++i)
+        std::cout << ", " << xVelocityDistribution[i];
+    std::cout << "], yVel: [" << yVelocityDistribution[0];
+    for (int i = 1; i < NUM_VELOCITY; ++i)
+        std::cout << ", " << yVelocityDistribution[i];
+    std::cout << "], Occ: " << occupiedProbability << std::endl;
 }
 
-__global__ void computeDistributions(bof::Cell *cell) {
+__global__ void computeDistributions(bof::Cell *occGrid, bof::Cell *prevOccGrid) {
     unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -69,10 +76,10 @@ __global__ void computeDistributions(bof::Cell *cell) {
     }
 
     unsigned int index = y * GRID_ROWS + x;
-    cell[index].occupiedProbability = cell[index].occupiedProbability + 1;
+    occGrid[index].updateDistributions(prevOccGrid);
 }
 
-void callKernel(bof::Cell *cell) {
+void callKernel(bof::Cell *occGrid, bof::Cell *prevOccGrid) {
     /* Compute gridsize and blocksize */
     const unsigned int width = 32;
     const dim3 blockSize(width, width, 1);
@@ -81,5 +88,5 @@ void callKernel(bof::Cell *cell) {
     unsigned int gridRows = GRID_ROWS / width + (GRID_ROWS % width != 0);
     const dim3 gridSize(gridRows, gridCols, 1);
 
-    computeDistributions<<<gridSize, blockSize >>>(cell);
+    computeDistributions<<<gridSize, blockSize >>>(occGrid, prevOccGrid);
 }

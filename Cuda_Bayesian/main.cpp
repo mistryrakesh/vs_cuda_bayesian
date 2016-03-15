@@ -34,28 +34,33 @@ int main(int argc, char **argv) {
     size_t numBytes = sizeof(bof::Cell) * GRID_ROWS * GRID_COLS;
 
     bof::Cell *h_m = new bof::Cell[GRID_ROWS * GRID_COLS];
-    bof::Cell *d_m;
+    bof::Cell *d_prevOccGrid;
+    bof::Cell *d_occGrid;
+
+    cout << "Size of grid (bytes): " << numBytes << endl;
 
     init(h_m);
-    printOccupancy(h_m);
+    // printOccupancy(h_m);
 
-    checkCudaErrors((cudaMalloc(&d_m, numBytes)));
-    checkCudaErrors(cudaMemcpy(d_m, h_m, numBytes, cudaMemcpyHostToDevice));
+    checkCudaErrors((cudaMalloc(&d_prevOccGrid, numBytes)));
+    checkCudaErrors(cudaMemcpy(d_prevOccGrid, h_m, numBytes, cudaMemcpyHostToDevice));
+    checkCudaErrors((cudaMalloc(&d_occGrid, numBytes)));
+    checkCudaErrors(cudaMemcpy(d_occGrid, h_m, numBytes, cudaMemcpyHostToDevice));
 
     /* Call kernel */
     GpuTimer timer;
     timer.Start();
-    callKernel(d_m);
+    callKernel(d_occGrid, d_prevOccGrid);
     timer.Stop();
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
 
     cout << "Elapsed time: " << timer.Elapsed() << endl;
-    checkCudaErrors(cudaMemcpy(h_m, d_m, numBytes, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_m, d_occGrid, numBytes, cudaMemcpyDeviceToHost));
 
-    printOccupancy(h_m);
+    // printOccupancy(h_m);
     /* cleanup */
-    cudaFree(d_m);
+    cudaFree(d_occGrid);
     delete h_m;
 
     return 0;

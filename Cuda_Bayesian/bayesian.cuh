@@ -107,10 +107,17 @@ namespace bof {
 /**
  * Kernel for computing distribution of each cell
  *
- * @param cell linearized 2D array of measured occupancy grid
+ * @param occGrid       linearized 2D array of measured occupancy grid
+ * @param prevOccGrid   linearized 2D array of previous occupancy grid
  */
-__global__ void computeDistributions(bof::Cell *cell);
+__global__ void computeDistributions(bof::Cell *occGrid, bof::Cell *prevOccGrid);
 
-void callKernel(bof::Cell *cell);
+/**
+* Wrapper for kernel call
+*
+* @param occGrid       linearized 2D array of measured occupancy grid
+* @param prevOccGrid   linearized 2D array of previous occupancy grid
+*/
+void callKernel(bof::Cell *occGrid, bof::Cell *prevOccGrid);
 
 #endif // __bayesian_cuh__
