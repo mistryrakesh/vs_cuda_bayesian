@@ -50,7 +50,8 @@ int main(int argc, char **argv) {
     /* Call kernel */
     GpuTimer timer;
     timer.Start();
-    callKernel(d_occGrid, d_prevOccGrid);
+    float dt = 0.5; // compute time delay here
+    callKernel(d_occGrid, d_prevOccGrid, dt);
     timer.Stop();
     cudaDeviceSynchronize();
     checkCudaErrors(cudaGetLastError());
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
 
     // printOccupancy(h_m);
     /* cleanup */
+    cudaFree(d_prevOccGrid);
     cudaFree(d_occGrid);
     delete h_m;
 

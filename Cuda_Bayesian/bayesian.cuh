@@ -93,8 +93,9 @@ namespace bof {
          * Parent function for updating occupancy grid from previous occupancy grid
          *
          * @param prevOccGrid   linearized 2D array of previous occupancy grid
+         * @param dt            time difference between previous scan and new scan
          */
-        __host__ __device__ void updateDistributions(Cell *prevOccGrid);
+        __host__ __device__ void updateDistributions(Cell *prevOccGrid, float dt);
 
         /**
          * Generic print function for debug purposes
@@ -109,15 +110,17 @@ namespace bof {
  *
  * @param occGrid       linearized 2D array of measured occupancy grid
  * @param prevOccGrid   linearized 2D array of previous occupancy grid
+ * @param dt            time difference between previous scan and new scan
  */
-__global__ void computeDistributions(bof::Cell *occGrid, bof::Cell *prevOccGrid);
+__global__ void computeDistributions(bof::Cell *occGrid, bof::Cell *prevOccGrid, float dt);
 
 /**
 * Wrapper for kernel call
 *
 * @param occGrid       linearized 2D array of measured occupancy grid
 * @param prevOccGrid   linearized 2D array of previous occupancy grid
+* @param dt            time difference between previous scan and new scan
 */
-void callKernel(bof::Cell *occGrid, bof::Cell *prevOccGrid);
+void callKernel(bof::Cell *occGrid, bof::Cell *prevOccGrid, float dt);
 
 #endif // __bayesian_cuh__
