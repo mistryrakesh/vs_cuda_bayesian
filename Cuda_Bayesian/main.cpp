@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     /* Call kernel */
     GpuTimer timer;
     timer.Start();
-    float dt = 0.5; // compute time delay here
+    float dt = 0.5f; // compute time delay here
     callKernel(d_occGrid, d_prevOccGrid, dt);
     timer.Stop();
     cudaDeviceSynchronize();

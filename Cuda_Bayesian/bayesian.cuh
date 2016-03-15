@@ -39,7 +39,7 @@ namespace bof {
          * @param antSize       size of 'antecedents' array
          * @param prevOccGrid   linearized 2D array of previous occupancy grid
          */
-        __host__ __device__ void getAntecedents(Cell *antecedents, int *antSize, const Cell *prevOccGrid);
+        __host__ __device__ bof::Cell** getAntecedents(int *antSize, Cell *prevOccGrid, float dt);
         
         /**
          * Computes 'alphaO' and 'alphaE' for a given velocity
