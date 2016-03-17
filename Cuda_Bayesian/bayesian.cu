@@ -50,8 +50,22 @@ __host__ __device__ bof::Cell** bof::Cell::getAntecedents(int *antSize, bof::Cel
     return antecedents;
 }
 
-__host__ __device__ void bof::Cell::getPrediction(float *alphaO, float *alphaE, const int xVelocity, const int yVelocity, bof::Cell *antecedents, const int antSize, const bof::Cell *prevOccGrid) {
-    return;
+__host__ __device__ void bof::Cell::getPrediction(float *alphaO, float *alphaE, const int xVelocity, const int yVelocity, bof::Cell **antecedents, const int antSize, const bof::Cell *prevOccGrid, float dt) {
+    *alphaO = *alphaE = 0.0f;
+
+    for (int i = 0; i < antSize; ++i) {
+        Cell *cell = antecedents[i];
+
+        *alphaO += (1.0f / antSize) *
+            cell->xVelocityDistribution[(xVelocity + MAX_VELOCITY) / VEL_STRIDE] * cell->yVelocityDistribution[(yVelocity + MAX_VELOCITY) / VEL_STRIDE] *
+            cell->isReachable(xVelocity, yVelocity, cell, dt) *
+            cell->occupiedProbability;
+
+        *alphaE += (1.0f / antSize) *
+            cell->xVelocityDistribution[(xVelocity + MAX_VELOCITY) / VEL_STRIDE] * cell->yVelocityDistribution[(yVelocity + MAX_VELOCITY) / VEL_STRIDE] *
+            cell->isReachable(xVelocity, yVelocity, cell, dt) *
+            (1.0f - cell->occupiedProbability);
+    }
 }
 
 __host__ __device__ void bof::Cell::getEstimation(float *alphaOccMatrix, float *alphaEmpMatrix, const float lvkSum) {
@@ -66,7 +80,13 @@ __host__ __device__ void bof::Cell::updateVelocityProbabilities(const float *alp
     return;
 }
 
-__host__ __device__ int bof::Cell::isReachable(const int xVelocity, const int yVelocity, const bof::Cell *cell) {
+__host__ __device__ int bof::Cell::isReachable(const int xVelocity, const int yVelocity, const bof::Cell *cell, float dt) {
+    int reachableXPos = lroundf(cell->xpos + xVelocity * dt);
+    int reachableYPos = lroundf(cell->ypos + yVelocity * dt);
+
+    if (xpos == reachableXPos && ypos == reachableYPos)
+        return 1;
+
     return 0;
 }
 
@@ -75,12 +95,30 @@ __host__ __device__ void bof::Cell::updateDistributions(bof::Cell *prevOccGrid, 
 
     int antSize;
     Cell **antecedents = getAntecedents(&antSize, prevOccGrid, dt);
+    assert(antSize > 0);
 
-    printf("Pos: (%d, %d), antSize: %d, antecedents: [", xpos, ypos, antSize);
-    for (int i = 0; i < antSize; ++i)
-        printf("(%d, %d) ", antecedents[i]->xpos, antecedents[i]->ypos);
-    printf("]\n");
+    float *betaOccMatrix = new float[NUM_VELOCITY * NUM_VELOCITY];
+    float *betaEmpMatrix = new float[NUM_VELOCITY * NUM_VELOCITY];
+    float lvkSum = 0;
 
+    for (int xVel = -MAX_VELOCITY; xVel <= MAX_VELOCITY; xVel += VEL_STRIDE) {
+        int i = (xVel + MAX_VELOCITY) / VEL_STRIDE;
+        for (int yVel = -MAX_VELOCITY; yVel <= MAX_VELOCITY; yVel += VEL_STRIDE) {
+            int j = (yVel + MAX_VELOCITY) / VEL_STRIDE;
+            float alphaO = 0, alphaE = 0;
+            getPrediction(&alphaO, &alphaE, xVel, yVel, antecedents, antSize, prevOccGrid, dt);
+
+            float betaO = xVelocityDistribution[i] * yVelocityDistribution[j] * alphaO;
+            float betaE = xVelocityDistribution[i] * yVelocityDistribution[j] * alphaE;
+            lvkSum += betaO + betaE;
+
+            betaOccMatrix[i * NUM_VELOCITY + j] = betaO;
+            betaEmpMatrix[i * NUM_VELOCITY + j] = betaE;
+        }
+    }
+
+    delete betaOccMatrix;
+    delete betaEmpMatrix;
     delete antecedents;
 }
 

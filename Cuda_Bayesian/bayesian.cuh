@@ -35,9 +35,11 @@ namespace bof {
         /**
          * Returns the set of antecedents for the current cell
          *
-         * @param antecedents   pointer to a list of antecedents computed by the function
          * @param antSize       size of 'antecedents' array
          * @param prevOccGrid   linearized 2D array of previous occupancy grid
+         * @param dt            time difference between previous scan and new scan
+         *
+         * @return              an array of 'Cell *' (Cell pointers which are antecedents)
          */
         __host__ __device__ bof::Cell** getAntecedents(int *antSize, Cell *prevOccGrid, float dt);
         
@@ -48,11 +50,12 @@ namespace bof {
          * @param alphaE        pointer to computed alphaE value
          * @param xVelocity     velocity in x-axis
          * @param yVelocity     velocity in y-axis
-         * @param antecedents   array of antecedents for the current cell
+         * @param antecedents   array of antecedents for the current cell (array of Cell*)
          * @param antSize       size of 'antecedents'
          * @param prevOccGrid   linearized 2D array of previous occupancy grid
+         * @param dt            time difference between previous scan and new scan
          */
-        __host__ __device__ void getPrediction(float *alphaO, float *alphaE, const int xVelocity, const int yVelocity, Cell *antecedents, const int antSize, const Cell *prevOccGrid);
+        __host__ __device__ void getPrediction(float *alphaO, float *alphaE, const int xVelocity, const int yVelocity, Cell **antecedents, const int antSize, const Cell *prevOccGrid, float dt);
 
         /**
          * Normalizes 'alphaOccMatrix' and 'alphaEmpMatrix'
@@ -86,8 +89,9 @@ namespace bof {
          * @param xVelocity     velocity in x-axis
          * @param xVelocity     velocity in x-axis
          * @param cell          previous cell
+         * @param dt            time difference between previous scan and new scan
          */
-        __host__ __device__ int isReachable(const int xVelocity, const int yVelocity, const Cell *cell);
+        __host__ __device__ int isReachable(const int xVelocity, const int yVelocity, const Cell *cell, float dt);
 
         /**
          * Parent function for updating occupancy grid from previous occupancy grid
