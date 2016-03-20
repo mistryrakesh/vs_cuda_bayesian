@@ -69,15 +69,32 @@ __host__ __device__ void bof::Cell::getPrediction(float *alphaO, float *alphaE, 
 }
 
 __host__ __device__ void bof::Cell::getEstimation(float *alphaOccMatrix, float *alphaEmpMatrix, const float lvkSum) {
-    return;
+    for (int i = 0; i < NUM_VELOCITY; ++i) {
+        for (int j = 0; j < NUM_VELOCITY; ++j) {
+            alphaOccMatrix[i * NUM_VELOCITY + j] /= lvkSum;
+            alphaEmpMatrix[i * NUM_VELOCITY + j] /= lvkSum;
+        }
+    }
 }
 
 __host__ __device__ float bof::Cell::getNewOccupiedProbability(const float *alphaOccMatrix) {
-    return 0.0f;
+    float sum = 0.0f;
+    for (int i = 0; i < NUM_VELOCITY; ++i) {
+        for (int j = 0; j < NUM_VELOCITY; ++j) {
+            sum += alphaOccMatrix[i * NUM_VELOCITY + j];
+        }
+    }
+
+    return sum;
 }
 
-__host__ __device__ void bof::Cell::updateVelocityProbabilities(const float *alphaOccMatrix, const float *alphaEmpMatrix, const int *xVelocityKeys, const int *yVelocityKeys) {
-    return;
+__host__ __device__ void bof::Cell::updateVelocityProbabilities(const float *alphaOccMatrix, const float *alphaEmpMatrix) {
+    for (int i = 0; i < NUM_VELOCITY; ++i) {
+        for (int j = 0; j < NUM_VELOCITY; ++j) {
+            xVelocityDistribution[j] += alphaOccMatrix[i * NUM_VELOCITY + j] + alphaEmpMatrix[i * NUM_VELOCITY + j];
+            yVelocityDistribution[i] += alphaOccMatrix[i * NUM_VELOCITY + j] + alphaEmpMatrix[i * NUM_VELOCITY + j];
+        }
+    }
 }
 
 __host__ __device__ int bof::Cell::isReachable(const int xVelocity, const int yVelocity, const bof::Cell *cell, float dt) {
@@ -115,6 +132,12 @@ __host__ __device__ void bof::Cell::updateDistributions(bof::Cell *prevOccGrid, 
             betaOccMatrix[i * NUM_VELOCITY + j] = betaO;
             betaEmpMatrix[i * NUM_VELOCITY + j] = betaE;
         }
+    }
+
+    if (!lvkSum) {
+        getEstimation(betaOccMatrix, betaEmpMatrix, lvkSum);
+        occupiedProbability = getNewOccupiedProbability(betaOccMatrix);
+        updateVelocityProbabilities(betaOccMatrix, betaEmpMatrix);
     }
 
     delete betaOccMatrix;

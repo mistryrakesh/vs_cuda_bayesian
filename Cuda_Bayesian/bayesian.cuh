@@ -78,10 +78,8 @@ namespace bof {
          *
          * @param alphaOccMatrix    linearized 2D array of alphaOccMatrix
          * @param alphaEmpMatrix    linearized 2D array of alphaEmpMatrix
-         * @param xVelocityKeys
-         * @param yVelocityKeys
          */
-        __host__ __device__ void updateVelocityProbabilities(const float *alphaOccMatrix, const float *alphaEmpMatrix, const int *xVelocityKeys, const int *yVelocityKeys);
+        __host__ __device__ void updateVelocityProbabilities(const float *alphaOccMatrix, const float *alphaEmpMatrix);
 
         /**
          * Computes if the current cell is reachable from a given 'cell' with given velocity
